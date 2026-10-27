@@ -14,7 +14,6 @@ export const categories = [
 export const difficulties = ['facil', 'medio', 'dificil'] as const
 
 export type Category = (typeof categories)[number]
-export type CategoryFilter = Category | 'todas'
 export type Difficulty = (typeof difficulties)[number]
 export type DifficultyFilter = Difficulty | 'misturado'
 
@@ -29,7 +28,7 @@ export interface GameSettings {
   duration: 30 | 60 | 90 | 120
   wordCount: 5 | 10 | 15 | 20
   difficulty: DifficultyFilter
-  category: CategoryFilter
+  categories: Category[]
   allowFallback: boolean
   soundEnabled: boolean
 }
@@ -57,8 +56,7 @@ export interface MatchResult {
 
 export type Screen = 'home' | 'settings' | 'preparation' | 'game' | 'results' | 'how-to' | 'history'
 
-export const categoryLabels: Record<CategoryFilter, string> = {
-  todas: 'Todas',
+export const categoryLabels: Record<Category, string> = {
   animais: 'Animais',
   objetos: 'Objetos',
   alimentos: 'Alimentos',
@@ -69,6 +67,13 @@ export const categoryLabels: Record<CategoryFilter, string> = {
   tecnologia: 'Tecnologia',
   cotidiano: 'Cotidiano',
   cultura_geral: 'Cultura geral',
+}
+
+export function formatCategorySelection(selectedCategories: readonly Category[]): string {
+  if (selectedCategories.length === categories.length) return 'Todas'
+  if (selectedCategories.length === 1) return categoryLabels[selectedCategories[0]]
+  if (selectedCategories.length === 0) return 'Nenhuma'
+  return `${selectedCategories.length} categorias`
 }
 
 export const difficultyLabels: Record<DifficultyFilter, string> = {

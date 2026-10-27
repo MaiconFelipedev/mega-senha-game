@@ -39,7 +39,14 @@ export function SettingsScreen({ settings, statistics, onChange, onBack, onStart
   const durations = [30, 60, 90, 120] as const
   const wordCounts = [5, 10, 15, 20] as const
   const allDifficulties = [...difficulties, 'misturado'] as const
-  const allCategories = ['todas', ...categories] as const
+  const selectedCategories = new Set(settings.categories)
+
+  const toggleCategory = (category: (typeof categories)[number]) => {
+    const nextSelection = selectedCategories.has(category)
+      ? settings.categories.filter((selected) => selected !== category)
+      : categories.filter((available) => selectedCategories.has(available) || available === category)
+    onChange({ ...settings, categories: nextSelection })
+  }
 
   return (
     <div className="page-container">
@@ -52,12 +59,19 @@ export function SettingsScreen({ settings, statistics, onChange, onBack, onStart
           <ChoiceGroup label="Quantidade de palavras" values={wordCounts} current={settings.wordCount} format={(value) => `${value} palavras`} onChange={(wordCount) => onChange({ ...settings, wordCount })} />
         </div>
         <ChoiceGroup label="Dificuldade" values={allDifficulties} current={settings.difficulty} format={(value) => difficultyLabels[value]} onChange={(difficulty) => onChange({ ...settings, difficulty })} />
-        <fieldset>
-          <legend className="setting-label">Categoria</legend>
+        <fieldset aria-describedby="category-selection-count">
+          <div className="category-selection-header">
+            <legend className="setting-label mb-0">Categorias</legend>
+            <div className="category-selection-tools">
+              <span id="category-selection-count" aria-live="polite">{settings.categories.length} de {categories.length} selecionadas</span>
+              <button type="button" onClick={() => onChange({ ...settings, categories: [...categories] })}>Selecionar todas</button>
+              <button type="button" onClick={() => onChange({ ...settings, categories: [] })}>Limpar seleção</button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {allCategories.map((category) => (
-              <button type="button" key={category} onClick={() => onChange({ ...settings, category })} className={`choice-button ${settings.category === category ? 'choice-active' : ''}`} aria-pressed={settings.category === category}>
-                {settings.category === category && <Check className="h-4 w-4" />}
+            {categories.map((category) => (
+              <button type="button" key={category} onClick={() => toggleCategory(category)} className={`choice-button ${selectedCategories.has(category) ? 'choice-active' : ''}`} aria-pressed={selectedCategories.has(category)}>
+                {selectedCategories.has(category) && <Check className="h-4 w-4" />}
                 {categoryLabels[category]}
               </button>
             ))}
@@ -67,7 +81,7 @@ export function SettingsScreen({ settings, statistics, onChange, onBack, onStart
         <div className="grid gap-3 sm:grid-cols-2">
           <button type="button" className={`toggle-row ${settings.allowFallback ? 'toggle-on' : ''}`} onClick={() => onChange({ ...settings, allowFallback: !settings.allowFallback })}>
             <Shuffle className="h-5 w-5" />
-            <span><strong>Complementar categoria</strong><small>Usar outras categorias somente se faltarem palavras</small></span>
+            <span><strong>Complementar categorias</strong><small>Usar outras categorias somente se faltarem palavras</small></span>
             <i aria-hidden="true" />
           </button>
           <button type="button" className={`toggle-row ${settings.soundEnabled ? 'toggle-on' : ''}`} onClick={() => onChange({ ...settings, soundEnabled: !settings.soundEnabled })}>

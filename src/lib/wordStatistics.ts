@@ -10,8 +10,9 @@ export interface WordStatistics {
 }
 
 export function filterWords(settings: GameSettings, database: readonly WordEntry[] = wordsDatabase): WordEntry[] {
+  const selectedCategories = new Set(settings.categories)
   return database.filter((word) => {
-    const categoryMatches = settings.category === 'todas' || word.category === settings.category
+    const categoryMatches = selectedCategories.has(word.category)
     const difficultyMatches = settings.difficulty === 'misturado' || word.difficulty === settings.difficulty
     return categoryMatches && difficultyMatches
   })

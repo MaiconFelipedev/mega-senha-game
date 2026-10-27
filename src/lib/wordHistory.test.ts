@@ -9,7 +9,7 @@ const settings: GameSettings = {
   duration: 60,
   wordCount: 5,
   difficulty: 'misturado',
-  category: 'todas',
+  categories: ['animais', 'objetos', 'alimentos', 'profissoes', 'lugares', 'natureza', 'esportes', 'tecnologia', 'cotidiano', 'cultura_geral'],
   allowFallback: false,
   soundEnabled: false,
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppShell } from './components/AppShell'
+import { CancelGameDialog } from './components/CancelGameDialog'
 import { applyGameAction, createGameState, finishByTime, getPendingWords, type GameAction } from './lib/gameEngine'
 import { playSound } from './lib/sound'
 import { clearHistory, loadHistory, loadSettings, saveMatch, saveSettings } from './lib/storage'
@@ -15,6 +16,8 @@ import { ResultsScreen } from './screens/ResultsScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import type { GameSettings, GameState, MatchResult, Screen } from './types'
 
+const GAME_GUARD_STATE_KEY = 'senhaRapidaGameGuard'
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
   const [settings, setSettings] = useState<GameSettings>(loadSettings)
@@ -26,11 +29,19 @@ export default function App() {
   const [history, setHistory] = useState<MatchResult[]>(loadHistory)
   const [wordHistory, setWordHistory] = useState(loadWordHistory)
   const [settingsError, setSettingsError] = useState('')
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const gameRef = useRef<GameState | null>(null)
+  const screenRef = useRef<Screen>('home')
   const finalizedRef = useRef(false)
   const feedbackTimerRef = useRef<number | null>(null)
   const wordPlanRef = useRef<WordDrawPlan | null>(null)
   const cycleStartedRef = useRef(false)
+  const gameGuardArmedRef = useRef(false)
+  const ignoreNextPopRef = useRef(false)
+
+  useEffect(() => {
+    screenRef.current = screen
+  }, [screen])
 
   const wordStatistics = useMemo(
     () => getWordStatistics(settings, wordHistory),
@@ -44,6 +55,54 @@ export default function App() {
   useEffect(() => () => {
     if (feedbackTimerRef.current) window.clearTimeout(feedbackTimerRef.current)
   }, [])
+
+  const isRoundActive = useCallback(() => {
+    const current = gameRef.current
+    return (screenRef.current === 'preparation' || screenRef.current === 'game') && Boolean(current && !current.ended)
+  }, [])
+
+  const armGameHistoryGuard = useCallback(() => {
+    if (gameGuardArmedRef.current) return
+    const currentState = window.history.state
+    const state = currentState && typeof currentState === 'object' ? currentState as Record<string, unknown> : {}
+    window.history.pushState({ ...state, [GAME_GUARD_STATE_KEY]: true }, '', window.location.href)
+    gameGuardArmedRef.current = true
+  }, [])
+
+  const disarmGameHistoryGuard = useCallback(() => {
+    if (!gameGuardArmedRef.current) return
+    gameGuardArmedRef.current = false
+    const currentState = window.history.state as Record<string, unknown> | null
+    if (currentState?.[GAME_GUARD_STATE_KEY]) {
+      ignoreNextPopRef.current = true
+      window.history.back()
+    }
+  }, [])
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (ignoreNextPopRef.current) {
+        ignoreNextPopRef.current = false
+        return
+      }
+      if (!isRoundActive()) return
+      gameGuardArmedRef.current = false
+      setCancelDialogOpen(true)
+    }
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isRoundActive()) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isRoundActive])
 
   const finalizeRound = useCallback((finishedGame: GameState) => {
     if (finalizedRef.current) return
@@ -60,11 +119,18 @@ export default function App() {
     }
     setHistory(saveMatch(match))
     setResult(match)
+    setCancelDialogOpen(false)
+    disarmGameHistoryGuard()
     if (match.endReason === 'time') playSound('finish', settings.soundEnabled)
     setScreen('results')
-  }, [settings])
+  }, [disarmGameHistoryGuard, settings])
 
   const prepareRound = useCallback(() => {
+    if (settings.categories.length === 0) {
+      setSettingsError('Selecione pelo menos uma categoria para iniciar a partida.')
+      setScreen('settings')
+      return
+    }
     try {
       const persistedWordHistory = loadWordHistory()
       const plan = createWordDrawPlan(settings, persistedWordHistory)
@@ -78,13 +144,15 @@ export default function App() {
       setRemaining(settings.duration)
       setCountdown(3)
       setFeedback(null)
+      setCancelDialogOpen(false)
       setSettingsError('')
+      armGameHistoryGuard()
       setScreen('preparation')
     } catch (error) {
       setSettingsError(error instanceof InsufficientWordsError ? error.message : 'Não foi possível preparar a rodada.')
       setScreen('settings')
     }
-  }, [settings])
+  }, [armGameHistoryGuard, settings])
 
   useEffect(() => {
     const displayedWord = game?.queue[0]
@@ -190,6 +258,36 @@ export default function App() {
   const toggleSound = () => updateSettings({ ...settings, soundEnabled: !settings.soundEnabled })
   const goHome = () => setScreen('home')
 
+  const requestRoundCancellation = useCallback(() => {
+    if (isRoundActive()) setCancelDialogOpen(true)
+  }, [isRoundActive])
+
+  const continueRound = useCallback(() => {
+    setCancelDialogOpen(false)
+    if (isRoundActive() && !gameGuardArmedRef.current) armGameHistoryGuard()
+  }, [armGameHistoryGuard, isRoundActive])
+
+  const cancelRound = useCallback(() => {
+    if (!isRoundActive()) {
+      setCancelDialogOpen(false)
+      return
+    }
+    finalizedRef.current = true
+    gameRef.current = null
+    wordPlanRef.current = null
+    cycleStartedRef.current = false
+    if (feedbackTimerRef.current) {
+      window.clearTimeout(feedbackTimerRef.current)
+      feedbackTimerRef.current = null
+    }
+    setGame(null)
+    setFeedback(null)
+    setResult(null)
+    setCancelDialogOpen(false)
+    disarmGameHistoryGuard()
+    setScreen('home')
+  }, [disarmGameHistoryGuard, isRoundActive])
+
   let content
   if (screen === 'home') content = <HomeScreen settings={settings} onStart={() => setScreen('settings')} onHowTo={() => setScreen('how-to')} onSettings={() => setScreen('settings')} onHistory={() => setScreen('history')} />
   else if (screen === 'settings') content = <SettingsScreen settings={settings} statistics={wordStatistics} onChange={updateSettings} onBack={goHome} onStart={prepareRound} onResetWordHistory={() => {
@@ -209,5 +307,17 @@ export default function App() {
   }} />
   else content = <HomeScreen settings={settings} onStart={() => setScreen('settings')} onHowTo={() => setScreen('how-to')} onSettings={() => setScreen('settings')} onHistory={() => setScreen('history')} />
 
-  return <AppShell soundEnabled={settings.soundEnabled} onToggleSound={toggleSound} minimal={screen === 'game' || screen === 'preparation'}>{content}</AppShell>
+  return (
+    <>
+      <AppShell
+        soundEnabled={settings.soundEnabled}
+        onToggleSound={toggleSound}
+        minimal={screen === 'game' || screen === 'preparation'}
+        onRequestGameExit={screen === 'game' ? requestRoundCancellation : undefined}
+      >
+        {content}
+      </AppShell>
+      <CancelGameDialog open={cancelDialogOpen} onContinue={continueRound} onCancel={cancelRound} />
+    </>
+  )
 }

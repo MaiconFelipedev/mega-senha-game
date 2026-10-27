@@ -1,6 +1,6 @@
 import { CalendarDays, Clock3, History, Settings2, Trash2, Trophy } from 'lucide-react'
 import { BackButton, Button, PageTitle } from '../components/Ui'
-import { categoryLabels, difficultyLabels, type MatchResult } from '../types'
+import { difficultyLabels, formatCategorySelection, type MatchResult } from '../types'
 
 interface HistoryScreenProps {
   history: MatchResult[]
@@ -47,7 +47,7 @@ export function HistoryScreen({ history, onBack, onClear, onStart }: HistoryScre
                   <div className="mt-2 flex flex-wrap gap-2">
                     <span className="mini-pill"><Clock3 />{match.settings.duration}s</span>
                     <span className="mini-pill"><Settings2 />{difficultyLabels[match.settings.difficulty]}</span>
-                    <span className="mini-pill">{categoryLabels[match.settings.category]}</span>
+                    <span className="mini-pill">{formatCategorySelection(match.settings.categories)}</span>
                     <span className="mini-pill text-rose-300">{match.wrong.length} erros</span>
                     <span className="mini-pill text-amber-300">{match.pending.length} pendentes</span>
                   </div>

@@ -33,6 +33,7 @@ function prioritizeNotRecent(words: readonly WordEntry[], recentIds: Set<string>
 }
 
 function getEligiblePool(settings: GameSettings, database: readonly WordEntry[]): WordEntry[] {
+  if (settings.categories.length === 0) throw new InsufficientWordsError(0, settings.wordCount)
   const primary = filterWords(settings, database)
   if (primary.length >= settings.wordCount) return primary
   if (!settings.allowFallback) throw new InsufficientWordsError(primary.length, settings.wordCount)

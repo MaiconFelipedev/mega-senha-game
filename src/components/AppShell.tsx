@@ -1,4 +1,4 @@
-import { Maximize, Minimize, Volume2, VolumeX } from 'lucide-react'
+import { ArrowLeft, Maximize, Minimize, Volume2, VolumeX } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Brand } from './Brand'
 
@@ -7,9 +7,10 @@ interface AppShellProps {
   soundEnabled: boolean
   onToggleSound: () => void
   minimal?: boolean
+  onRequestGameExit?: () => void
 }
 
-export function AppShell({ children, soundEnabled, onToggleSound, minimal = false }: AppShellProps) {
+export function AppShell({ children, soundEnabled, onToggleSound, minimal = false, onRequestGameExit }: AppShellProps) {
   const [isFullscreen, setIsFullscreen] = useState(Boolean(document.fullscreenElement))
 
   useEffect(() => {
@@ -26,8 +27,13 @@ export function AppShell({ children, soundEnabled, onToggleSound, minimal = fals
   return (
     <div className="app-background min-h-dvh overflow-hidden text-slate-100">
       <div className="noise-layer" aria-hidden="true" />
-      <header className={`relative z-30 mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 py-4 sm:px-8 ${minimal ? 'absolute left-1/2 -translate-x-1/2' : ''}`}>
-        <Brand compact />
+      <header className={`${minimal ? 'fixed inset-x-0 top-0' : 'relative'} z-30 mx-auto flex w-full max-w-[1600px] items-center justify-between px-4 py-4 sm:px-8`}>
+        {onRequestGameExit ? (
+          <button className="game-menu-button" onClick={onRequestGameExit}>
+            <ArrowLeft />
+            <span>Voltar ao menu</span>
+          </button>
+        ) : <Brand compact />}
         <div className="flex items-center gap-2">
           <button className="icon-button" onClick={onToggleSound} aria-label={soundEnabled ? 'Desativar sons' : 'Ativar sons'} title={soundEnabled ? 'Desativar sons' : 'Ativar sons'}>
             {soundEnabled ? <Volume2 /> : <VolumeX />}

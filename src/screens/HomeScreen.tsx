@@ -1,6 +1,6 @@
 import { ArrowRight, BookOpen, Clock3, History, Settings, Sparkles, Trophy } from 'lucide-react'
 import type { GameSettings } from '../types'
-import { categoryLabels, difficultyLabels } from '../types'
+import { difficultyLabels, formatCategorySelection } from '../types'
 import { Button } from '../components/Ui'
 
 interface HomeScreenProps {
@@ -53,7 +53,7 @@ export function HomeScreen({ settings, onStart, onHowTo, onSettings, onHistory }
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <div className="preview-stat"><Clock3 /><strong>{settings.duration}s</strong><span>Tempo</span></div>
             <div className="preview-stat"><Trophy /><strong>{settings.wordCount}</strong><span>Palavras</span></div>
-            <div className="preview-stat"><Sparkles /><strong className="truncate text-sm sm:text-lg">{difficultyLabels[settings.difficulty]}</strong><span>{categoryLabels[settings.category]}</span></div>
+            <div className="preview-stat"><Sparkles /><strong className="truncate text-sm sm:text-lg">{difficultyLabels[settings.difficulty]}</strong><span>{formatCategorySelection(settings.categories)}</span></div>
           </div>
           <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/5">
             <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-violet-500 to-lime" />
