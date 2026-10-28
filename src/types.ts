@@ -54,7 +54,47 @@ export interface MatchResult {
   endReason: 'time' | 'completed'
 }
 
-export type Screen = 'home' | 'settings' | 'preparation' | 'game' | 'results' | 'how-to' | 'history'
+export interface TrainingSettings {
+  difficulty: DifficultyFilter
+  categories: Category[]
+}
+
+export interface TrainingWord {
+  word: WordEntry
+  hints: readonly string[]
+}
+
+export interface TrainingRoundResult {
+  word: WordEntry
+  outcome: 'correct' | 'skipped'
+  incorrectGuesses: number
+  guessCount: number
+  hintsUsed: number
+}
+
+export interface TrainingSessionResult {
+  id: string
+  playedAt: string
+  settings: TrainingSettings
+  correctCount: number
+  skippedCount: number
+  incorrectGuesses: number
+  averageHintsPerCorrect: number | null
+  rounds: TrainingRoundResult[]
+}
+
+export type Screen =
+  | 'home'
+  | 'settings'
+  | 'preparation'
+  | 'game'
+  | 'results'
+  | 'how-to'
+  | 'history'
+  | 'training-settings'
+  | 'training'
+  | 'training-results'
+  | 'training-history'
 
 export const categoryLabels: Record<Category, string> = {
   animais: 'Animais',

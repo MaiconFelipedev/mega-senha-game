@@ -1,17 +1,17 @@
-import { ArrowRight, BookOpen, Clock3, History, Settings, Sparkles, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, Brain, Clock3, History, Settings, Sparkles, Trophy, Users, Wifi } from 'lucide-react'
 import type { GameSettings } from '../types'
 import { difficultyLabels, formatCategorySelection } from '../types'
-import { Button } from '../components/Ui'
 
 interface HomeScreenProps {
   settings: GameSettings
   onStart: () => void
+  onTraining: () => void
   onHowTo: () => void
   onSettings: () => void
   onHistory: () => void
 }
 
-export function HomeScreen({ settings, onStart, onHowTo, onSettings, onHistory }: HomeScreenProps) {
+export function HomeScreen({ settings, onStart, onTraining, onHowTo, onSettings, onHistory }: HomeScreenProps) {
   return (
     <div className="relative mx-auto flex min-h-[calc(100dvh-80px)] max-w-[1500px] items-center px-4 pb-10 pt-14 sm:px-8 lg:py-16">
       <div className="orb orb-one" aria-hidden="true" />
@@ -28,13 +28,25 @@ export function HomeScreen({ settings, onStart, onHowTo, onSettings, onHistory }
           <p className="mt-8 max-w-xl text-xl font-medium leading-relaxed text-slate-300 sm:text-2xl">
             Uma palavra. Uma dica.<br /><span className="text-white">Quanto você consegue acertar?</span>
           </p>
-          <div className="home-actions mt-10 flex flex-col gap-3 sm:flex-row">
-            <Button className="home-primary-action w-full sm:w-auto sm:min-w-64" onClick={onStart} icon={<Sparkles className="h-5 w-5" />}>
-              Começar jogo <ArrowRight className="ml-auto h-5 w-5" />
-            </Button>
-            <Button variant="secondary" className="home-secondary-action w-full sm:w-auto" onClick={onHowTo} icon={<BookOpen className="h-5 w-5" />}>Como jogar</Button>
+          <div className="mode-options mt-9">
+            <button className="mode-card mode-card-primary" onClick={onStart}>
+              <span className="mode-card-icon"><Users /></span>
+              <span><strong>Jogar presencialmente</strong><small>Uma pessoa dá as dicas e a outra tenta acertar contra o tempo.</small></span>
+              <ArrowRight />
+            </button>
+            <button className="mode-card mode-card-training" onClick={onTraining}>
+              <span className="mode-card-icon"><Brain /></span>
+              <span><strong>Modo Treinamento</strong><small>Treine sozinho, receba dicas e descubra as palavras no seu ritmo.</small></span>
+              <ArrowRight />
+            </button>
+            <div className="mode-card mode-card-disabled" aria-label="Modo online, em breve">
+              <span className="mode-card-icon"><Wifi /></span>
+              <span><strong>Modo online</strong><small>Espaço reservado para uma futura modalidade multiplayer.</small></span>
+              <em>EM BREVE</em>
+            </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
+            <button className="text-action" onClick={onHowTo}><BookOpen className="h-4 w-4" /> Como jogar</button>
             <button className="text-action" onClick={onSettings}><Settings className="h-4 w-4" /> Configurações</button>
             <button className="text-action" onClick={onHistory}><History className="h-4 w-4" /> Histórico</button>
           </div>

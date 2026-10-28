@@ -1,6 +1,6 @@
 # Senha Rápida
 
-Jogo presencial de adivinhação de palavras para duas pessoas, feito com React, TypeScript, Vite, Tailwind CSS e Lucide. Não usa backend nem serviços externos: preferências, palavras recentes e histórico ficam no `localStorage` do navegador.
+Jogo de adivinhação de palavras com modalidade presencial para duas pessoas e treinamento individual, feito com React, TypeScript, Vite, Tailwind CSS e Lucide. Não usa backend nem serviços externos: preferências, palavras utilizadas e históricos ficam no `localStorage` do navegador.
 
 ## Funcionalidades
 
@@ -15,6 +15,10 @@ Jogo presencial de adivinhação de palavras para duas pessoas, feito com React,
 - Atalhos `Enter`, `A`, `P` e `E`, controles grandes para toque, tela cheia e layout para celular, tablet, computador e TV.
 - Sons opcionais gerados no navegador, sem arquivos de áudio externos.
 - Resultado detalhado e histórico persistente das últimas 100 partidas.
+- Modo Treinamento sem cronômetro, com tentativas ilimitadas, dicas sequenciais e resposta por clique ou `Enter`.
+- Banco inicial de treinamento com 150 palavras e 600 dicas cadastradas, distribuídas por todas as 10 categorias e 3 dificuldades.
+- Estatísticas individuais de acertos, palavras puladas, palpites incorretos e média de dicas por acerto.
+- Configurações, ciclo de palavras e histórico do treinamento totalmente separados do modo presencial.
 - Testes automatizados do banco, sorteio inteligente, ciclos, fila, pontuação, término, cliques duplicados e persistência.
 
 ## Executar localmente
@@ -45,7 +49,7 @@ O arquivo `vercel.json` registra explicitamente o framework Vite, o comando `npm
 
 1. Envie o projeto para um repositório GitHub.
 2. No painel da Vercel, escolha **Add New → Project** e importe o repositório.
-3. Como este aplicativo está dentro de outro diretório de trabalho, defina **Root Directory** como `senha-rapida`.
+3. Mantenha **Root Directory** como `./`, pois o aplicativo está na raiz do repositório.
 4. Confirme o preset **Vite**. O build deve aparecer como `npm run build` e a saída como `dist`.
 5. Clique em **Deploy** e aguarde o status de sucesso.
 6. Abra a URL fornecida pela Vercel e execute uma partida curta antes de divulgar o endereço.
@@ -53,30 +57,18 @@ O arquivo `vercel.json` registra explicitamente o framework Vite, o comando `npm
 ### Pela CLI
 
 ```bash
-npx vercel --cwd senha-rapida
+npx vercel
 ```
 
 Execute o comando acima a partir da raiz do repositório. A primeira execução solicitará a vinculação do projeto. Para produção, depois de validar a prévia:
 
 ```bash
-npx vercel --cwd senha-rapida --prod
+npx vercel --prod
 ```
 
 Não há variáveis de ambiente obrigatórias.
 
-## Estado do Git
-
-No workspace em que este projeto foi preparado, o repositório raiz ainda não possuía commits nem remoto configurado. Para enviar somente este aplicativo sem incluir os demais arquivos do workspace:
-
-```bash
-git add senha-rapida
-git commit -m "feat: prepara Senha Rápida para publicação"
-git branch -M main
-git remote add origin URL_DO_REPOSITORIO
-git push -u origin main
-```
-
-Antes de executar, substitua `URL_DO_REPOSITORIO` pela URL criada no GitHub e confirme com `git status` que somente os arquivos desejados serão versionados.
+O projeto está publicado a partir do repositório [MaiconFelipedev/mega-senha-game](https://github.com/MaiconFelipedev/mega-senha-game). Novos commits na branch `main` geram uma nova implantação de produção pela Vercel.
 
 Arquivos de ambiente, dependências, builds, cobertura, logs, cache do Vite e estado local da Vercel estão excluídos pelo `.gitignore`.
 
@@ -88,10 +80,14 @@ Arquivos de ambiente, dependências, builds, cobertura, logs, cache do Vite e es
 - `src/lib/wordHistory.ts`: persistência das palavras efetivamente exibidas.
 - `src/lib/wordStatistics.ts`: métricas do banco conforme os filtros.
 - `src/lib/storage.ts`: configurações e histórico local.
-- `src/screens/`: telas do menu, preparação, jogo, resultados e histórico.
+- `src/data/trainingHints.ts`: banco revisado de palavras e dicas do treinamento.
+- `src/lib/trainingEngine.ts`: filtros, sorteio, validação e estatísticas do treinamento.
+- `src/lib/trainingStorage.ts`: configurações, palavras utilizadas e histórico individual.
+- `src/screens/`: telas do menu, preparação, jogo, treinamento, resultados e históricos.
 
 ## Limitações conhecidas
 
 - Os dados são locais ao navegador/dispositivo e não são sincronizados.
-- O jogo não reconhece voz nem valida automaticamente as dicas, conforme o escopo desta versão.
+- O treinamento usa exclusivamente dicas previamente cadastradas; não há geração por IA nem reconhecimento de sinônimos.
+- O jogo não reconhece voz, conforme o escopo desta versão.
 - Efeitos sonoros dependem da permissão de reprodução do navegador após interação do usuário.
