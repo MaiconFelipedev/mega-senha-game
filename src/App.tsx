@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppShell } from './components/AppShell'
 import { CancelGameDialog } from './components/CancelGameDialog'
 import { TrainingExitDialog } from './components/TrainingExitDialog'
@@ -56,6 +56,8 @@ interface ActiveTrainingRound {
   feedback: string
 }
 
+const OnlineModeScreen = lazy(() => import('./screens/OnlineModeScreen').then((module) => ({ default: module.OnlineModeScreen })))
+
 export default function App() {
   const [screen, setScreenState] = useState<Screen>(() => getScreenFromPath(window.location.pathname))
   const [settings, setSettings] = useState<GameSettings>(loadSettings)
@@ -84,6 +86,7 @@ export default function App() {
   const feedbackTimerRef = useRef<number | null>(null)
   const wordPlanRef = useRef<WordDrawPlan | null>(null)
   const cycleStartedRef = useRef(false)
+  const onlineExitHandlerRef = useRef<(() => void) | null>(null)
 
   const navigateTo = useCallback((nextScreen: Screen, replace = false) => {
     const currentState = window.history.state
@@ -103,11 +106,18 @@ export default function App() {
     navigateTo(nextScreen, true)
   }, [navigateTo])
 
+  const registerOnlineExitGuard = useCallback((handler: (() => void) | null) => {
+    onlineExitHandlerRef.current = handler
+  }, [])
+
   useEffect(() => {
     const initialScreen = screenRef.current
     const currentState = window.history.state
     const state = currentState && typeof currentState === 'object' ? currentState as Record<string, unknown> : {}
-    window.history.replaceState({ ...state, [NAVIGATION_STATE_KEY]: initialScreen }, '', getScreenPath(initialScreen))
+    const initialUrl = initialScreen === 'online'
+      ? `${getScreenPath(initialScreen)}${window.location.search}`
+      : getScreenPath(initialScreen)
+    window.history.replaceState({ ...state, [NAVIGATION_STATE_KEY]: initialScreen }, '', initialUrl)
   }, [])
 
   useEffect(() => {
@@ -155,6 +165,10 @@ export default function App() {
         const previousState = event.state && typeof event.state === 'object' ? event.state as Record<string, unknown> : {}
         window.history.pushState({ ...previousState, [NAVIGATION_STATE_KEY]: activeScreen }, '', getScreenPath(activeScreen))
         setTrainingExitDialogOpen(true)
+      } else if (screenRef.current === 'online' && onlineExitHandlerRef.current) {
+        const previousState = event.state && typeof event.state === 'object' ? event.state as Record<string, unknown> : {}
+        window.history.pushState({ ...previousState, [NAVIGATION_STATE_KEY]: 'online' }, '', getScreenPath('online'))
+        onlineExitHandlerRef.current()
       } else {
         const nextScreen = getScreenFromHistory(event.state, window.location.pathname)
         screenRef.current = nextScreen
@@ -484,7 +498,7 @@ export default function App() {
   }, [isTrainingActive])
 
   let content
-  if (screen === 'home') content = <HomeScreen settings={settings} onStart={() => setScreen('settings')} onTraining={() => setScreen('training-settings')} onHowTo={() => setScreen('how-to')} onSettings={() => setScreen('settings')} onHistory={() => setScreen('history')} />
+  if (screen === 'home') content = <HomeScreen settings={settings} onStart={() => setScreen('settings')} onTraining={() => setScreen('training-settings')} onOnline={() => setScreen('online')} onHowTo={() => setScreen('how-to')} onSettings={() => setScreen('settings')} onHistory={() => setScreen('history')} />
   else if (screen === 'settings') content = <SettingsScreen settings={settings} statistics={wordStatistics} onChange={updateSettings} onBack={goHome} onStart={prepareRound} onResetWordHistory={() => {
     if (window.confirm('Reiniciar as palavras utilizadas? Palavras vistas anteriormente poderão ser sorteadas novamente. O histórico de resultados será preservado.')) {
       setWordHistory(resetWordHistory())
@@ -548,7 +562,12 @@ export default function App() {
       }
     }}
   />
-  else content = <HomeScreen settings={settings} onStart={() => setScreen('settings')} onTraining={() => setScreen('training-settings')} onHowTo={() => setScreen('how-to')} onSettings={() => setScreen('settings')} onHistory={() => setScreen('history')} />
+  else if (screen === 'online') content = (
+    <Suspense fallback={<div className="online-loading"><strong>Carregando Modo Online…</strong></div>}>
+      <OnlineModeScreen onBack={goHome} registerExitGuard={registerOnlineExitGuard} />
+    </Suspense>
+  )
+  else content = <HomeScreen settings={settings} onStart={() => setScreen('settings')} onTraining={() => setScreen('training-settings')} onOnline={() => setScreen('online')} onHowTo={() => setScreen('how-to')} onSettings={() => setScreen('settings')} onHistory={() => setScreen('history')} />
 
   return (
     <>

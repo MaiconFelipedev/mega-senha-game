@@ -14,6 +14,7 @@ const screenPaths: Record<Screen, string> = {
   training: '/treinamento/jogar',
   'training-results': '/treinamento/resultado',
   'training-history': '/treinamento/historico',
+  online: '/online',
 }
 
 const stablePathScreens: Record<string, Screen> = {
@@ -23,6 +24,7 @@ const stablePathScreens: Record<string, Screen> = {
   '/historico': 'history',
   '/treinamento': 'training-settings',
   '/treinamento/historico': 'training-history',
+  '/online': 'online',
 }
 
 const screens = new Set<Screen>(Object.keys(screenPaths) as Screen[])
@@ -45,6 +47,7 @@ export function getScreenFromPath(pathname: string): Screen {
   const stableScreen = stablePathScreens[path]
   if (stableScreen) return stableScreen
   if (path.startsWith('/treinamento')) return 'training-settings'
+  if (path.startsWith('/online')) return 'online'
   if (path.startsWith('/partida')) return 'settings'
   return 'home'
 }

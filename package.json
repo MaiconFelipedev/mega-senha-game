@@ -13,11 +13,14 @@
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "supabase:seed": "node scripts/generate-online-words.mjs",
+    "test:online:local": "node scripts/test-online-integration.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",
     "@fontsource-variable/space-grotesk": "5.3.0",
+    "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "1.61.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"

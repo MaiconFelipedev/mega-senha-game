@@ -81,6 +81,7 @@ describe('navegação e cancelamento de partida', () => {
 describe('rotas do navegador', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    window.sessionStorage.clear()
     window.history.replaceState(null, '', '/')
   })
 
@@ -116,6 +117,18 @@ describe('rotas do navegador', () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: /modo treinamento/i })).toBeInTheDocument()
     expect(window.location.pathname).toBe('/treinamento')
+  })
+
+  it('abre o modo online pelo menu e preserva o código do convite na URL', () => {
+    const menu = render(<App />)
+    fireEvent.click(screen.getByRole('button', { name: /modo online/i }))
+    expect(window.location.pathname).toBe('/online')
+    menu.unmount()
+
+    window.history.replaceState(null, '', '/online?sala=K7M4P9Q2')
+    render(<App />)
+    expect(window.location.pathname).toBe('/online')
+    expect(window.location.search).toBe('?sala=K7M4P9Q2')
   })
 })
 

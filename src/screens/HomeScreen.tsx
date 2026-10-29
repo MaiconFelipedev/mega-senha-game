@@ -6,12 +6,13 @@ interface HomeScreenProps {
   settings: GameSettings
   onStart: () => void
   onTraining: () => void
+  onOnline: () => void
   onHowTo: () => void
   onSettings: () => void
   onHistory: () => void
 }
 
-export function HomeScreen({ settings, onStart, onTraining, onHowTo, onSettings, onHistory }: HomeScreenProps) {
+export function HomeScreen({ settings, onStart, onTraining, onOnline, onHowTo, onSettings, onHistory }: HomeScreenProps) {
   return (
     <div className="relative mx-auto flex min-h-[calc(100dvh-80px)] max-w-[1500px] items-center px-4 pb-10 pt-14 sm:px-8 lg:py-16">
       <div className="orb orb-one" aria-hidden="true" />
@@ -39,11 +40,11 @@ export function HomeScreen({ settings, onStart, onTraining, onHowTo, onSettings,
               <span><strong>Modo Treinamento</strong><small>Treine sozinho, receba dicas e descubra as palavras no seu ritmo.</small></span>
               <ArrowRight />
             </button>
-            <div className="mode-card mode-card-disabled" aria-label="Modo online, em breve">
+            <button className="mode-card mode-card-online" onClick={onOnline}>
               <span className="mode-card-icon"><Wifi /></span>
-              <span><strong>Modo online</strong><small>Espaço reservado para uma futura modalidade multiplayer.</small></span>
-              <em>EM BREVE</em>
-            </div>
+              <span><strong>Modo Online</strong><small>Crie uma sala, convide um amigo e descubram palavras juntos, mesmo à distância.</small></span>
+              <ArrowRight />
+            </button>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button className="text-action" onClick={onHowTo}><BookOpen className="h-4 w-4" /> Como jogar</button>

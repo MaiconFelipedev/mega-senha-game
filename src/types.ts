@@ -95,6 +95,7 @@ export type Screen =
   | 'training'
   | 'training-results'
   | 'training-history'
+  | 'online'
 
 export const categoryLabels: Record<Category, string> = {
   animais: 'Animais',

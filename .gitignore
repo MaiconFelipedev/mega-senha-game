@@ -6,6 +6,8 @@ coverage
 !.env.example
 .vercel
 .vite
+supabase/.temp
+supabase/.branches
 .DS_Store
 *.local
 *.log
