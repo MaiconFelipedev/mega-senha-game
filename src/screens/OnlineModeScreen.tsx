@@ -49,14 +49,21 @@ const defaultSettings: OnlineSettings = {
 }
 
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim()
+const requiresTurnstile = import.meta.env.PROD && isSupabaseConfigured
 
 interface TurnstileApi {
   render: (container: HTMLElement, options: {
     sitekey: string
     theme: 'dark'
+    language: 'pt-BR'
+    size: 'flexible'
+    retry: 'auto'
+    'refresh-expired': 'auto'
+    'refresh-timeout': 'auto'
     callback: (token: string) => void
     'expired-callback': () => void
     'error-callback': () => void
+    'timeout-callback': () => void
   }) => string
   remove: (widgetId: string) => void
 }
@@ -77,9 +84,15 @@ function TurnstileChallenge({ onToken }: { onToken: (token: string) => void }) {
       widgetIdRef.current = api.render(containerRef.current, {
         sitekey: turnstileSiteKey,
         theme: 'dark',
+        language: 'pt-BR',
+        size: 'flexible',
+        retry: 'auto',
+        'refresh-expired': 'auto',
+        'refresh-timeout': 'auto',
         callback: onToken,
         'expired-callback': () => onToken(''),
         'error-callback': () => onToken(''),
+        'timeout-callback': () => onToken(''),
       })
     }
 
@@ -152,11 +165,13 @@ function EntryScreen({
   const [code, setCode] = useState(inviteCode)
   const [localError, setLocalError] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
+  const turnstileMisconfigured = requiresTurnstile && !turnstileSiteKey
 
   const submitCreate = async (event: FormEvent) => {
     event.preventDefault()
     const validationError = validateNickname(nickname)
     if (validationError) return setLocalError(validationError)
+    if (turnstileMisconfigured) return setLocalError('A proteção antiabuso não está configurada neste ambiente.')
     if (turnstileSiteKey && !captchaToken) return setLocalError('Conclua a verificação de segurança.')
     setLocalError('')
     await onCreate(sanitizeNickname(nickname), defaultSettings, captchaToken || undefined).catch(() => undefined)
@@ -166,6 +181,7 @@ function EntryScreen({
     event.preventDefault()
     const validationError = validateNickname(nickname) ?? validateRoomCode(code)
     if (validationError) return setLocalError(validationError)
+    if (turnstileMisconfigured) return setLocalError('A proteção antiabuso não está configurada neste ambiente.')
     if (turnstileSiteKey && !captchaToken) return setLocalError('Conclua a verificação de segurança.')
     setLocalError('')
     await onJoin(normalizeRoomCode(code), sanitizeNickname(nickname), captchaToken || undefined).catch(() => undefined)
@@ -228,11 +244,11 @@ function EntryScreen({
             />
           </label>
           <TurnstileChallenge onToken={setCaptchaToken} />
-          <OnlineError message={localError || error} />
-          <Button type="submit" disabled={pending || Boolean(turnstileSiteKey && !captchaToken)} icon={pending ? <LoaderCircle className="animate-spin" /> : mode === 'create' ? <Users /> : <DoorOpen />}>
+          <OnlineError message={turnstileMisconfigured ? 'A proteção antiabuso não está configurada neste ambiente.' : localError || error} />
+          <Button type="submit" disabled={pending || turnstileMisconfigured || Boolean(turnstileSiteKey && !captchaToken)} icon={pending ? <LoaderCircle className="animate-spin" /> : mode === 'create' ? <Users /> : <DoorOpen />}>
             {pending ? 'Conectando…' : mode === 'create' ? 'Criar sala' : 'Entrar na sala'}
           </Button>
-          <div className="online-security-note"><ShieldCheck /> Sessão anônima protegida. Nenhum cadastro é necessário.</div>
+          <div className="online-security-note"><ShieldCheck /> {turnstileMisconfigured ? 'Modo Online bloqueado até a proteção antiabuso ser configurada.' : 'Sessão anônima protegida. Nenhum cadastro é necessário.'}</div>
         </form>
       )}
     </div>

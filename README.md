@@ -75,7 +75,7 @@ O arquivo `vercel.json` registra explicitamente o framework Vite, o comando `npm
 3. Mantenha **Root Directory** como `./`, pois o aplicativo está na raiz do repositório.
 4. Confirme o preset **Vite**. O build deve aparecer como `npm run build` e a saída como `dist`.
 5. Clique em **Deploy** e aguarde o status de sucesso.
-6. Para uma prévia do modo online, configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` somente no ambiente **Preview** e valide dois dispositivos antes de promover para produção.
+6. Para uma prévia do modo online, configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_TURNSTILE_SITE_KEY` somente no ambiente **Preview** e valide dois dispositivos antes de promover para produção.
 7. Abra a URL fornecida pela Vercel e execute uma partida curta antes de divulgar o endereço.
 
 ### Pela CLI
@@ -120,4 +120,4 @@ Arquivos de ambiente, dependências, builds, cobertura, logs, cache do Vite e es
 - O treinamento usa exclusivamente dicas previamente cadastradas; não há geração por IA nem reconhecimento de sinônimos.
 - O jogo não reconhece voz, conforme o escopo desta versão.
 - Efeitos sonoros dependem da permissão de reprodução do navegador após interação do usuário.
-- O projeto Supabase de produção ainda precisa ser criado e configurado antes que o multiplayer seja publicado. Não reutilize automaticamente um banco de outro produto.
+- A Preview do multiplayer ainda depende da reconciliação do histórico de migrations, do Turnstile habilitado no Supabase Auth e da homologação em dois dispositivos reais antes de qualquer publicação na `main`.

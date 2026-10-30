@@ -59,6 +59,23 @@ const roomCode = hostState.room.code
 assert.match(roomCode, /^[A-HJ-NP-Z2-9]{8}$/u)
 assert.equal(hostState.me.role, 'giver')
 
+const { data:hostRoomRows, error:hostRoomRowsError } = await host
+  .from('online_rooms')
+  .select('id')
+  .eq('id', roomId)
+if (hostRoomRowsError) throw hostRoomRowsError
+assert.equal(hostRoomRows.length, 1)
+
+const { data:strangerRoomRows, error:strangerRoomRowsError } = await stranger
+  .from('online_rooms')
+  .select('id')
+  .eq('id', roomId)
+if (strangerRoomRowsError) throw strangerRoomRowsError
+assert.equal(strangerRoomRows.length, 0, 'RLS não pode revelar a sala a terceiros')
+
+const { error:wordReadError } = await host.from('online_words').select('id').limit(1)
+assert.ok(wordReadError, 'o banco secreto de palavras não pode ser lido pelo cliente')
+
 await expectRpcError(stranger, 'get_online_room_state', { p_room_id: roomId }, 'not_room_member')
 await expectRpcError(host, 'start_online_game', { p_room_id: roomId }, 'participants_not_ready')
 
@@ -183,6 +200,12 @@ assert.equal(hostState.room.status, 'waiting')
 assert.equal(hostState.me.role, 'guesser')
 assert.equal(guestState.me.role, 'giver')
 
+await rpc(guest, 'leave_online_room', { p_room_id: roomId })
+hostState = await rpc(host, 'get_online_room_state', { p_room_id: roomId })
+assert.equal(hostState.room.status, 'cancelled')
+assert.equal(hostState.participants.length, 1)
+await expectRpcError(guest, 'get_online_room_state', { p_room_id: roomId }, 'not_room_member')
+
 await guest.removeChannel(realtimeChannel)
 for (const client of [host, guest, stranger, reconnectedGuest]) client.realtime.disconnect()
-console.log('Integração Supabase aprovada: 2 clientes, RLS, Realtime, regras, idempotência, reconexão e inversão de papéis.')
+console.log('Integração Supabase aprovada: 2 clientes, RLS, Realtime, regras, idempotência, reconexão, inversão de papéis e saída da sala.')

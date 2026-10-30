@@ -35,18 +35,28 @@ Todas as tabelas usam RLS. Palavras, palavras da rodada, tentativas e histórico
 2. Vincule o projeto com a Supabase CLI ou execute a migration e o seed pelo painel.
 3. Em **Authentication → Providers**, habilite **Anonymous Sign-Ins**.
 4. Em **Realtime Settings**, desabilite **Allow public access**. Os clientes usam canais `private: true` e as políticas de `realtime.messages` limitam o tópico aos participantes.
-5. Defina um limite conservador para logins anônimos. Para exposição pública, configure Cloudflare Turnstile no Supabase e na Vercel. Ao definir `VITE_TURNSTILE_SITE_KEY`, a interface exige o desafio e envia o token ao `signInAnonymously`.
+5. Defina um limite conservador para logins anônimos. Para exposição pública, configure Cloudflare Turnstile no Supabase e na Vercel. Ao definir `VITE_TURNSTILE_SITE_KEY`, a interface exige o desafio e envia o token ao `signInAnonymously`. Em builds de produção, o Modo Online permanece bloqueado se a Site Key estiver ausente.
 6. Programe `cleanup_online_multiplayer_data()` em um job protegido (por exemplo, Supabase Cron) para expirar salas e remover dados temporários antigos.
 7. Configure somente a URL e a publishable key no Vite/Vercel. Nunca exponha secret key, service role ou senha do PostgreSQL.
 
 ## Vercel Preview
 
 1. Envie a branch de feature ao GitHub quando autorizado.
-2. Configure as duas variáveis públicas apenas no ambiente **Preview**.
+2. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_TURNSTILE_SITE_KEY` apenas no ambiente **Preview**.
 3. Gere uma implantação de prévia sem promover para produção.
-4. Abra o link em dois celulares, de preferência um no Wi‑Fi e outro em rede móvel.
-5. Valide criação por apelido, entrada por código e link, prontidão, dicas, palpites, acerto, pulo, reconexão, término e inversão de papéis.
-6. Confirme no DevTools do adivinhador que a resposta ativa não aparece em respostas HTTP, eventos Realtime ou estado do frontend.
+4. Mantenha a Vercel Authentication habilitada e crie um Shareable Link revogável somente para os testadores convidados. Não torne a branch publicamente acessível antes de validar o CAPTCHA.
+5. Abra o link em dois celulares, de preferência um no Wi‑Fi e outro em rede móvel.
+6. Valide criação por apelido, entrada por código e link, prontidão, dicas, palpites, acerto, pulo, reconexão, término e inversão de papéis.
+7. Confirme no DevTools do adivinhador que a resposta ativa não aparece em respostas HTTP, eventos Realtime ou estado do frontend.
+
+## Cloudflare Turnstile
+
+1. No painel Cloudflare, crie um widget Turnstile real em modo **Managed**; chaves de teste não protegem uma Preview pública.
+2. Autorize somente o hostname da URL de branch da Vercel, sem protocolo, porta ou caminho. O hostname pode ser acrescentado ao widget depois que o primeiro deployment gerar a URL.
+3. Configure a Site Key como `VITE_TURNSTILE_SITE_KEY` no ambiente **Preview** da Vercel.
+4. Em **Supabase → Authentication → Bot and Abuse Protection**, selecione Turnstile, cadastre o Secret Key e habilite CAPTCHA. Um secret de Edge Functions não configura o Supabase Auth.
+5. O frontend usa renderização explícita, envia o token em `captchaToken` para `signInAnonymously` e limpa o token em erro, expiração ou timeout. O widget renova automaticamente tokens expirados e tentativas com falha.
+6. Tokens Turnstile são de uso único e expiram em cinco minutos. Valide criação e ingresso tanto em condição normal quanto após deixar o desafio expirar.
 
 ## Comandos de validação
 
